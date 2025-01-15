@@ -11,7 +11,7 @@
           v-model="newTask"
           @keyup.enter="addTask"
         />
-        <button @click="addTask"><i class="fas fa-plus"></i></button>
+        <button class="btn-addtask" @click="addTask"><i class="fas fa-plus"></i></button>
       </div>
       <div class="taskItems">
         <ul>
@@ -47,7 +47,7 @@ export default {
   data() {
     return {
       newTask: "",
-      tasksCopy: [...this.tasks], // Tworzymy lokalną kopię tasks
+      tasksCopy: [...this.tasks],
     };
   },
   computed: {
@@ -66,20 +66,19 @@ export default {
         return;
       }
 
-      const loggedInUsername = localStorage.getItem("loggedInUsername"); // Pobieramy nazwę użytkownika
+      const loggedInUsername = localStorage.getItem("loggedInUsername"); 
       if (!loggedInUsername) {
         alert("Zaloguj się, aby dodać zadania!");
         return;
       }
 
-      // Dodajemy zadanie z przypisanym username
       if (this.newTask) {
         const newTask = {
           title: this.newTask,
           completed: false,
-          username: loggedInUsername, // Przypisujemy username do zadania
+          username: loggedInUsername, 
         };
-        this.tasksCopy.push(newTask); // Modyfikujemy lokalną kopię
+        this.tasksCopy.push(newTask); 
         this.newTask = "";
         this.saveTasksToLocalStorage();
       }
@@ -107,7 +106,7 @@ export default {
       this.saveTasksToLocalStorage();
     },
     saveTasksToLocalStorage() {
-      const loggedInUsername = localStorage.getItem("loggedInUsername"); // Sprawdzamy, czy użytkownik jest zalogowany
+      const loggedInUsername = localStorage.getItem("loggedInUsername"); 
       if (loggedInUsername) {
         // Zapisujemy zadania z nazwą użytkownika
         const userTasks = this.tasksCopy.filter(task => task.username === loggedInUsername);

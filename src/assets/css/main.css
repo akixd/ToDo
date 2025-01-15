@@ -1,6 +1,3 @@
-/* 
-ogolne
-*/
 * {
   margin: 0;
   padding: 0;
@@ -61,9 +58,6 @@ ul {
   padding: 0;
 }
 
-/* 
-task 
-*/
 .task {
   background: #fff;
   border-radius: 25px;
@@ -79,6 +73,9 @@ task
 .form {
   position: relative;
   margin: 0 0 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
 }
 
 .form button {
@@ -116,9 +113,6 @@ task
   padding: 0 6px;
 }
 
-/* 
-task items
-*/
 .taskItems {
   padding: 0 10px;
 }
@@ -147,9 +141,75 @@ task items
   text-decoration:line-through;
 }
 
-/* 
-Login / Rejestracja 
-*/
+.nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 15px; 
+  padding: 15px 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.btn-logout {
+position: absolute;
+top: 0;
+right: 0;
+border-radius: 20px;
+border: none;
+background-color: #44aca8;
+margin: 30px;
+padding: 15px;
+font-size: 14px;
+color: #fff;
+}
+
+.btn-login, .btn-register-2, .btn-register-1 {
+  border-radius: 20px;
+  border: none;
+  background-color: #44aca8;
+  font-size: 16px;
+  width: 55%;
+  align-self: center;
+  color: #fff;
+  padding: 10px 20px; 
+  cursor: pointer;
+  text-align: center; 
+  display: inline-block;
+}
+
+.btn-register-1 {
+  font-size: 14px;
+  padding: 5px 10px;
+  margin: 2px 5px;
+  width: 50%;
+}
+
+.btn-login:hover, .btn-register-2:hover, .btn-register-1:hover {
+  background-color: #369c8c; 
+}
+
+.btn-addtask {
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  background-color: #fff;
+  width: 40px;
+  height: 40px;
+  cursor: pointer; 
+
+  box-sizing: border-box;
+}
+
+.btn-addtask i {
+  font-size: 20px; 
+  color: #4ec5c1; 
+  margin-left: 30px;
+  padding: 0;
+}
+
+
 .login-register-container {
   display: flex;
   flex-direction: column;
@@ -228,9 +288,6 @@ button.toggle-register-btn:hover {
   color: #333;
 }
 
-/* 
-zmiana z logowania na rejestracje
-*/
 form {
   display: flex;
   flex-direction: column;
@@ -247,20 +304,6 @@ form input[type="password"] {
   font-size: 14px;
 }
 
-/*
-ustawienie buttonu wylogowanie
-*/
-
-button.logout-btn{
-margin: 0 auto;
-padding: auto;
-align-self: center;
-}
-
-/* 
-General page margin and padding adjustments
----------------------------------------------
-*/
 body {
   font: 15px/1.4 "Poppins", sans-serif;
   background: #4ec5c1;
@@ -287,7 +330,7 @@ body {
   padding: 0 15px;
 }
 
-/* Responsive Styles */
+/* sesponsywność */
 @media (max-width: 480px) {
   .login-register-container {
     padding: 30px 20px;

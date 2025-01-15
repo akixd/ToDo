@@ -1,25 +1,27 @@
 <template>
   <div id="app">
+
     <!-- Formularz logowania -->
     <div v-if="!isLoggedIn">
-      <h2>Zaloguj się</h2>
-      <form @submit.prevent="login">
+      <h2 class="title">Zaloguj się</h2>
+      <Login @login="login" />
+      <form id="loginmform" @submit.prevent="login" method="post">
         <input v-model="username" type="text" placeholder="Nazwa użytkownika" required />
         <input v-model="password" type="password" placeholder="Hasło" required />
-        <button class="login-btn" type="submit">Zaloguj</button>
+        <button class="btn-login" type="submit">Zaloguj się</button>
       </form>
       
       <p>Nie masz konta? 
-        <button @click="showRegisterForm = !showRegisterForm">Zarejestruj się</button>
+        <button class="btn-register-1" @click="showRegisterForm = !showRegisterForm">Zarejestruj się</button>
       </p>
 
       <!-- Formularz rejestracji -->
       <div v-if="showRegisterForm">
-        <h2>Rejestracja</h2>
+        <h2 class="title">Rejestracja</h2>
         <form @submit.prevent="register">
           <input v-model="newUsername" type="text" placeholder="Nazwa użytkownika" required />
           <input v-model="newPassword" type="password" placeholder="Hasło" required />
-          <button class="register-btn" type="submit">Zarejestruj się</button>
+          <button class="btn-register-2" type="submit">Zarejestruj się</button>
         </form>
       </div>
     </div>
@@ -27,8 +29,17 @@
     <!-- Jeśli użytkownik jest zalogowany, wyświetl zadania -->
     <div v-else>
       <task v-bind:tasks="tasks"></task>
-      <button class="logout-btn" @click="logout">Wyloguj się</button>
+      <button class="btn-logout" @click="logout">Wyloguj się</button>
+      <div class=nav>
+        <router-link to="/todo">Lista To do</router-link>
+
+       
+        
+
+      </div>
     </div>
+
+
   </div>
 </template>
 
@@ -36,6 +47,10 @@
 <script>
 import Task from "./components/Task";
 
+/*import axios from "axios";
+
+const API_BASE_URL = "https://localhost:8080/api";
+*/
 export default {
   name: "App",
   components: {
@@ -43,27 +58,25 @@ export default {
   },
   data() {
     return {
-      tasks: [], // Lista zadań
-      username: "", // Nazwa użytkownika do logowania
-      password: "", // Hasło do logowania
-      newUsername: "", // Nazwa użytkownika do rejestracji
-      newPassword: "", // Hasło do rejestracji
-      isLoggedIn: false, // Flaga informująca o stanie logowania
-      showRegisterForm: false, // Flaga do pokazania formularza rejestracji
-      hideLoginForm: false,
+      tasks: [], 
+      username: "", 
+      password: "", 
+      newUsername: "", 
+      newPassword: "", 
+      isLoggedIn: false, 
+      showRegisterForm: false,
     };
   },
   mounted() {
-    this.checkLoginStatus(); // Sprawdzamy, czy użytkownik jest już zalogowany
-    this.checkUsersDatabase(); // Sprawdzamy, czy mamy już bazę użytkowników
-    this.loadTasksFromLocalStorage(); // Ładujemy zadania z localStorage
+    this.checkLoginStatus(); 
+    this.checkUsersDatabase(); 
+    this.loadTasksFromLocalStorage(); 
   },
   methods: {
     loadTasksFromLocalStorage() {
       const loggedInUsername = localStorage.getItem("loggedInUsername");
 
       if (loggedInUsername) {
-        // Ładujemy zadania i filtrujemy je po nazwie użytkownika
         const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
         this.tasks = tasks.filter(task => task.username === loggedInUsername);
       } else {
@@ -72,7 +85,6 @@ export default {
     },
     
     saveTasksToLocalStorage() {
-      // Zapisujemy wszystkie zadania do localStorage
       localStorage.setItem("tasks", JSON.stringify(this.tasks));
     },
 
@@ -84,10 +96,10 @@ export default {
           id: Date.now(),
           title: newTaskTitle,
           completed: false,
-          username: loggedInUsername, // Przypisujemy użytkownika do zadania
+          username: loggedInUsername, 
         };
         this.tasks.push(newTask);
-        this.saveTasksToLocalStorage(); // Zapisujemy zadania po dodaniu
+        this.saveTasksToLocalStorage(); 
       } else {
         alert("Musisz być zalogowany, aby dodać zadanie.");
       }
