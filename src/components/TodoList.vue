@@ -1,59 +1,96 @@
 <template>
-  <div>
-    <h1>Twoja lista zadań</h1>
-    <form @submit.prevent="addTask">
-      <input v-model="newTask" type="text" placeholder="Dodaj nowe zadanie" required />
-      <button type="submit">Dodaj</button>
-    </form>
-    <ul>
-      <li v-for="task in tasks" :key="task.id">
-        <input type="checkbox" v-model="task.completed" @change="saveTasks" />
-        <span :class="{ completed: task.completed }">{{ task.title }}</span>
-        <button @click="removeTask(task.id)">Usuń</button>
-      </li>
-    </ul>
-    <button @click="logout">Wyloguj się</button>
+  <div class="container">
+    <div class="task">
+      <div class="title">
+        <h1>Lista To Do</h1>
+      </div>
+      <div class="form">
+        <input
+          type="text"
+          placeholder="Nowe zadanie"
+          v-model="newTask"
+          @keyup.enter="addTask"
+        />
+        <button class="btn-addtask" @click="addTask"><i class="fas fa-plus"></i></button>
+      </div>
+      <div class="taskItems">
+        <ul>
+          <task-item
+            v-bind:task="task"
+            v-for="(task, index) in tasksCopy"
+            :key="task.id"
+            @remove="removeTask(index)"
+            @complete="completeTask(task)"
+          ></task-item>
+        </ul>
+      </div>
+      <div class="clearBtns">
+        <button @click="clearCompleted">Wyczyść ukończone</button>
+        <button @click="clearAll">Wyczyść wszystkie</button>
+      </div>
+      <div class="pendingTasks">
+        <span>Oczekujące zadania: {{ incomplete }}</span>
+      </div>
+    </div>
+  <button class="btn-logout" @click="logout">Wyloguj się</button>
+
   </div>
 </template>
 
 <script>
+import TaskItem from "./Task-item";
+
 export default {
-  data() {
-    return {
-      newTask: "",
-      tasks: [],
-    };
+  name: "Task",
+  props: ['tasks'],
+  components: {
+    TaskItem,
   },
   mounted() {
     this.loadTasks();
   },
+  data() {
+    return {
+      newTask: "",
+      tasksCopy: [...this.tasks],
+    };
+  },
+  computed: {
+    incomplete() {
+      return this.tasksCopy.filter(this.inProgress).length;
+    },
+  },
   methods: {
-    loadTasks() {
+    loadTasksFromLocalStorage() {
       const loggedInUsername = localStorage.getItem("loggedInUsername");
+
       if (loggedInUsername) {
         const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
         this.tasks = tasks.filter(task => task.username === loggedInUsername);
+      } else {
+        console.log("Brak zalogowanego użytkownika. Nie ładuje zadań.");
       }
     },
-    saveTasks() {
+    
+    saveTasksToLocalStorage() {
+      localStorage.setItem("tasks", JSON.stringify(this.tasks));
+    },
+
+    addTask(newTaskTitle) {
       const loggedInUsername = localStorage.getItem("loggedInUsername");
+
       if (loggedInUsername) {
-        const allTasks = JSON.parse(localStorage.getItem("tasks")) || [];
-        const updatedTasks = allTasks.filter(task => task.username !== loggedInUsername);
-        updatedTasks.push(...this.tasks.map(task => ({ ...task, username: loggedInUsername })));
-        localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+        const newTask = {
+          id: Date.now(),
+          title: newTaskTitle,
+          completed: false,
+          username: loggedInUsername, 
+        };
+        this.tasks.push(newTask);
+        this.saveTasksToLocalStorage(); 
+      } else {
+        alert("Musisz być zalogowany, aby dodać zadanie.");
       }
-    },
-    addTask() {
-      if (!this.newTask) return;
-      const task = {
-        id: Date.now(),
-        title: this.newTask,
-        completed: false,
-      };
-      this.tasks.push(task);
-      this.saveTasks();
-      this.newTask = "";
     },
     removeTask(taskId) {
       this.tasks = this.tasks.filter(task => task.id !== taskId);
@@ -67,8 +104,3 @@ export default {
 };
 </script>
 
-<style>
-.completed {
-  text-decoration: line-through;
-}
-</style>

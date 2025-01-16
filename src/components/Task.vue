@@ -25,7 +25,7 @@
         </ul>
       </div>
       <div class="clearBtns">
-        <button @click="clearCompleted">Wyczyść skończone</button>
+        <button @click="clearCompleted">Wyczyść ukończone</button>
         <button @click="clearAll">Wyczyść wszystkie</button>
       </div>
       <div class="pendingTasks">
@@ -108,7 +108,6 @@ export default {
     saveTasksToLocalStorage() {
       const loggedInUsername = localStorage.getItem("loggedInUsername"); 
       if (loggedInUsername) {
-        // Zapisujemy zadania z nazwą użytkownika
         const userTasks = this.tasksCopy.filter(task => task.username === loggedInUsername);
         localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify(userTasks));
       } else {

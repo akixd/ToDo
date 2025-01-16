@@ -1,10 +1,10 @@
 <template>
-    <div>
+    <div class="register-page">
       <h1>Rejestracja</h1>
       <form @submit.prevent="register">
         <input v-model="username" type="text" placeholder="Nazwa użytkownika" required />
         <input v-model="password" type="password" placeholder="Hasło" required />
-        <button type="submit">Zarejestruj</button>
+        <button class="btn-register-2" type="submit">Zarejestruj się</button>
       </form>
       <p>Masz już konto? <router-link to="/login">Zaloguj się</router-link></p>
     </div>
@@ -16,6 +16,9 @@
       return {
         username: "",
         password: "",
+        isLoggedIn: false,
+        isLoggedInGoogle: false, 
+        showRegisterForm: false,
       };
     },
     methods: {
@@ -33,6 +36,9 @@
         alert("Rejestracja zakończona pomyślnie! Możesz się teraz zalogować.");
         this.$router.push({ name: "login" });
       },
+      goToLoginPage() {
+      this.$router.push({name: "login" });
+    }
     },
   };
   </script>

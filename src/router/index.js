@@ -8,7 +8,7 @@ Vue.use(Router);
 
 const routes = [
   {
-    path: "/",
+    path: "/todo",
     name: "todo",
     component: TodoList,
     meta: { requiresAuth: true },
@@ -17,11 +17,13 @@ const routes = [
     path: "/login",
     name: "login",
     component: Login,
+    meta: { requiresAuth: false },
   },
   {
     path: "/register",
     name: "register",
     component: Register,
+    meta: { requiresAuth: false },
   },
 ];
 
@@ -30,11 +32,12 @@ const router = new Router({
   routes,
 });
 
-// Guard do sprawdzania uwierzytelnienia
 router.beforeEach((to, from, next) => {
   const isLoggedIn = localStorage.getItem("loggedInUsername");
-  if (to.matched.some(record => record.meta.requiresAuth) && !isLoggedIn) {
+  if (to.matched.some((record) => record.meta.requiresAuth) && !isLoggedIn) {
     next({ name: "login" });
+  } else if ((to.name === "login" || to.name === "register") && isLoggedIn) {
+    next({ name: "todo" });
   } else {
     next();
   }
