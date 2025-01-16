@@ -14,8 +14,8 @@ new Vue({
 
 gapi.load('client:auth2', () => {
   gapi.client.init({
-    apiKey: 'lista-todo-447917',
-    clientId: '601871836773-fq4crbbco6cr9qknm3h15mdn5fcqsf23.apps.googleusercontent.com',
+    apiKey: '',
+    clientId: '',
     discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/tasks/v1/rest'],
     scope: 'https://www.googleapis.com/auth/tasks',
   });
