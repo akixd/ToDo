@@ -1,10 +1,6 @@
 <template>
   <div id="app">
-
-<RouterView></RouterView>
-
-
-
+    <router-view />
   </div>
 </template>
 
@@ -17,7 +13,6 @@ import { gapi } from 'gapi-script';
 export default {
   name: "App",
   components: {
-
   },
   data() {
     return {
@@ -26,16 +21,23 @@ export default {
       password: "", 
       newUsername: "", 
       newPassword: "", 
-      isLoggedIn: false,
-      isLoggedInGoogle: false, 
     };
   },
   mounted() {
     this.checkLoginStatus(); 
     this.checkUsersDatabase(); 
-    this.loadTasksFromLocalStorage(); 
+    this.loadTasks();
   },
   methods: {
+    loadTasks() {
+    const accountType = localStorage.getItem("accountType");
+
+    if (accountType === "local") {
+      this.loadTasksFromLocalStorage();
+    } else if (accountType === "google") {
+      this.loadGoogleTasks();
+    }
+  },
     loadTasksFromLocalStorage() {
       const loggedInUsername = localStorage.getItem("loggedInUsername");
 
@@ -67,10 +69,18 @@ export default {
         alert("Musisz być zalogowany, aby dodać zadanie.");
       }
     },
+    async loadGoogleTasks() {
+    try {
+      const response = await gapi.client.tasks.tasks.list({
+        tasklist: "@default", 
+      });
+      this.tasks = response.result.items || [];
+    } catch (error) {
+      console.error("Nie udało się pobrać zadań:", error);
+    }
+  },
 
           logout() {
-        this.isLoggedIn = false;
-        this.isLoggedInGoogle = false;
         this.username = "";
         this.password = "";
         
@@ -80,7 +90,6 @@ export default {
         if (loggedInUsername) {
           localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify([]));
         }
-
         this.tasks = [];
         this.$router.push({ name: 'login' }); 
         alert("Wylogowano!");
@@ -89,8 +98,6 @@ export default {
         try {
           const googleAuth = gapi.auth2.getAuthInstance();
           await googleAuth.signOut();
-          this.isLoggedIn = false;
-          this.isLoggedInGoogle = false;
           this.tasks = [];
           localStorage.removeItem("loggedInUsername");
         } catch (error) {

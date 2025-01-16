@@ -32,8 +32,7 @@
         <span>Oczekujące zadania: {{ incomplete }}</span>
       </div>
     </div>
-  <button class="btn-logout" @click="logout">Wyloguj się</button>
-
+    <button class="btn-logout" @click="logout">Wyloguj się</button>
   </div>
 </template>
 
@@ -42,17 +41,14 @@ import TaskItem from "./Task-item";
 
 export default {
   name: "Task",
-  props: ['tasks'],
+  props: ["tasks"],
   components: {
     TaskItem,
-  },
-  mounted() {
-    this.loadTasks();
   },
   data() {
     return {
       newTask: "",
-      tasksCopy: [...this.tasks],
+      tasksCopy: [], 
     };
   },
   computed: {
@@ -63,44 +59,75 @@ export default {
   methods: {
     loadTasksFromLocalStorage() {
       const loggedInUsername = localStorage.getItem("loggedInUsername");
-
       if (loggedInUsername) {
-        const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-        this.tasks = tasks.filter(task => task.username === loggedInUsername);
-      } else {
-        console.log("Brak zalogowanego użytkownika. Nie ładuje zadań.");
+        const tasksFromStorage = localStorage.getItem(loggedInUsername + "_tasks");
+        if (tasksFromStorage) {
+          try {
+            this.tasksCopy = JSON.parse(tasksFromStorage);
+          } catch (error) {
+            console.error("Błąd podczas wczytywania zadań z Local Storage:", error);
+          }
+        }
       }
     },
-    
     saveTasksToLocalStorage() {
-      localStorage.setItem("tasks", JSON.stringify(this.tasks));
-    },
-
-    addTask(newTaskTitle) {
       const loggedInUsername = localStorage.getItem("loggedInUsername");
-
       if (loggedInUsername) {
+        localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify(this.tasksCopy));
+      } else {
+        console.log("Brak zalogowanego użytkownika. Nie zapisuję zadań.");
+      }
+    },
+    addTask() {
+      const loggedInUsername = localStorage.getItem("loggedInUsername");
+      if (loggedInUsername && this.newTask.trim()) {
         const newTask = {
           id: Date.now(),
-          title: newTaskTitle,
+          title: this.newTask,
           completed: false,
-          username: loggedInUsername, 
+          username: loggedInUsername,
         };
-        this.tasks.push(newTask);
-        this.saveTasksToLocalStorage(); 
+        this.tasksCopy.push(newTask); 
+        this.newTask = ""; 
+        this.saveTasksToLocalStorage();
       } else {
         alert("Musisz być zalogowany, aby dodać zadanie.");
       }
     },
-    removeTask(taskId) {
-      this.tasks = this.tasks.filter(task => task.id !== taskId);
-      this.saveTasks();
+    removeTask(index) {
+      this.tasksCopy.splice(index, 1); 
+      this.saveTasksToLocalStorage();
+    },
+    clearCompleted() {
+      this.tasksCopy = this.tasksCopy.filter(this.inProgress); 
+      this.saveTasksToLocalStorage();
+    },
+    clearAll() {
+      this.tasksCopy = [];
+      this.saveTasksToLocalStorage();
+    },
+    completeTask(task) {
+      task.completed = !task.completed;
+      this.saveTasksToLocalStorage();
+    },
+    inProgress(task) {
+      return !task.completed;
     },
     logout() {
       localStorage.removeItem("loggedInUsername");
       this.$router.push({ name: "login" });
     },
   },
+  watch: {
+    tasks: {
+      immediate: true, 
+      handler(newTasks) {
+        this.tasksCopy = [...newTasks]; 
+      },
+    },
+  },
+  mounted() {
+    this.loadTasksFromLocalStorage();
+  },
 };
 </script>
-

@@ -5,7 +5,7 @@
       <form id="loginmform" @submit.prevent="login" method="post">
         <input v-model="username" type="text" placeholder="Nazwa użytkownika" required />
         <input v-model="password" type="password" placeholder="Hasło" required />
-        <button class="btn-login" type="submit">Zaloguj się</button>
+        <button class="btn-login" type="submit" @click="login">Zaloguj się</button>
       </form>
       <p>Nie masz konta? 
         <button class="btn-register-1" @click="goToRegisterPage">Zarejestruj się</button>
@@ -42,17 +42,15 @@ import { gapi } from 'gapi-script';
       const user = users.find(u => u.username === this.username && u.password === this.password);
 
       if (user) {
-        this.isLoggedIn = true;
-        this.isLoggedInGoogle = true;
         this.username = ""; 
         this.password = "";
 
         localStorage.setItem("loggedInUsername", user.username);
-
+        localStorage.setItem("accountType", "local");
         this.loadTasksFromLocalStorage();
-        this.$router.push({ name: 'todo' }); 
-        window.location.reload();
         
+        this.$router.push({ name: 'todo' }); 
+
         alert("Zalogowano pomyślnie!");
       } else {
         alert("Niepoprawna nazwa użytkownika lub hasło!");
@@ -67,13 +65,11 @@ import { gapi } from 'gapi-script';
           console.log(token);
           const profile = user.getBasicProfile();
           const username = profile.getName();
-
-          this.isLoggedIn = true;
-          this.isLoggedInGoogle = true;
+         
           localStorage.setItem("loggedInUsername", username);
-          this.$router.push({ name: 'todo' }); 
-          window.location.reload();
+          localStorage.setItem("accountType", "google");
           await this.loadTasksFromGoogle();
+          this.$router.push({ name: 'todo' }); 
         } catch (error) {
           console.error('Logowanie do Google nie powiodło się:', error);
         }
