@@ -2,24 +2,17 @@
     <div class="loginPage">
       <h2 class="title">Zaloguj się</h2>
       <Login @login="login" />
-      <form id="loginmform" @submit.prevent="login" method="post">
+      <form @submit.prevent="login" method="post">
         <input v-model="username" type="text" placeholder="Nazwa użytkownika" required />
         <input v-model="password" type="password" placeholder="Hasło" required />
-        <button class="btn-login" type="submit" @click="login">Zaloguj się</button>
-      </form>
-      <p>Nie masz konta? 
-        <button class="btn-register-1" @click="goToRegisterPage">Zarejestruj się</button>
+        <button class="btn-login" type='sumbit'>Zaloguj się</button>
+        <button class="btn-login" type="submit" @click="googleSignIn">Zaloguj się przez Google</button>
+        <p>Nie masz konta? 
+        <router-link class="btn-register" to="/register">Zarejestruj się</router-link>
       </p>
-      <button class="btn-login" type="submit" @click="googleSignIn">Zaloguj się przez Google</button>
+      </form>
 
-      <div v-if="showRegisterForm">
-        <h2 class="title">Rejestracja</h2>
-        <form @submit.prevent="register">
-          <input v-model="newUsername" type="text" placeholder="Nazwa użytkownika" required />
-          <input v-model="newPassword" type="password" placeholder="Hasło" required />
-          <button class="btn-register-2" type="submit">Zarejestruj się</button>
-        </form>
-      </div>
+
     </div>
   </template>
   
@@ -36,19 +29,17 @@ import { gapi } from 'gapi-script';
       };
     },
     methods: {
-      login() {
+     async login() {
       const users = JSON.parse(localStorage.getItem("users")) || [];
-
       const user = users.find(u => u.username === this.username && u.password === this.password);
 
       if (user) {
         this.username = ""; 
         this.password = "";
-
         localStorage.setItem("loggedInUsername", user.username);
         localStorage.setItem("accountType", "local");
-        this.loadTasksFromLocalStorage();
-        
+        console.log("loggedInUsername:", localStorage.getItem("loggedInUsername"));
+        this.isLoggedIn = true; 
         this.$router.push({ name: 'todo' }); 
 
         alert("Zalogowano pomyślnie!");
@@ -61,23 +52,17 @@ import { gapi } from 'gapi-script';
           const googleAuth = gapi.auth2.getAuthInstance();
           const user = await googleAuth.signIn();
           const token = user.getAuthResponse().id_token;
-
           console.log(token);
           const profile = user.getBasicProfile();
           const username = profile.getName();
-         
           localStorage.setItem("loggedInUsername", username);
           localStorage.setItem("accountType", "google");
-          await this.loadTasksFromGoogle();
-          this.$router.push({ name: 'todo' }); 
+          this.isLoggedIn = true; 
+          this.$router.push({ name: "todo" }); 
         } catch (error) {
           console.error('Logowanie do Google nie powiodło się:', error);
         }
       },
-      goToRegisterPage() {
-      this.$router.push({name: "register" });
-
-    }
     },
   };
   </script>

@@ -68,6 +68,9 @@ ul {
 .title {
   text-align: center;
   margin: 0 0 20px;
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
 }
 
 .form {
@@ -165,36 +168,30 @@ font-size: 14px;
 color: #fff;
 }
 
-.btn-login, .btn-register-2, .btn-register-1 {
+.btn-login, .btn-register {
   border-radius: 20px;
   border: none;
   background-color: #44aca8;
   font-size: 16px;
-  width: 55%;
-  align-self: center;
+  width: 50%;
   color: #fff;
-  padding: 10px 20px; 
-  margin: 6px;
+  padding: 10px 10px;
+  margin: 12px auto; 
   cursor: pointer;
-  display: inline-block;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  text-align: center; 
+  text-decoration: none; 
 }
 
-.loginPage {
+.loginPage, .registerPage {
   text-align: center;
-}
-
-.btn-login:hover, .btn-register-2:hover, .btn-register-1:hover {
-  background-color: #369c8c; 
-}
-
-/*poprawić tu bo to stary kod loginpage*/
-
-.login-register-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: #fdfdfd;
   border-radius: 20px;
   padding: 40px 30px;
   box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
@@ -204,13 +201,9 @@ color: #fff;
   box-sizing: border-box;
 }
 
-.login-register-container h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
-  color: #333;
-  text-align: center;
+.btn-login:hover, .btn-register:hover {
+  background-color: #369c8c; 
 }
-
 
 .btn-addtask {
   display: flex; 
@@ -241,7 +234,7 @@ input[type="password"] {
   padding: 10px;
   background: #f3f3f3;
   color: #333;
-  border: 1px solid #ddd;
+  border: 1px solid #c4c4c4;
   border-radius: 10px;
   margin-bottom: 20px;
   transition: border 0.3s linear;
@@ -250,7 +243,7 @@ input[type="password"] {
 input[type="text"]:focus,
 input[type="password"]:focus {
   outline: none;
-  border: 1px solid #4ec5c1;
+  border: 1px solid #3f9996;
 }
 
 button.login-register-btn {

@@ -8,6 +8,10 @@ Vue.use(Router);
 
 const routes = [
   {
+    path: "/",
+    redirect: "/login",
+  },
+  {
     path: "/login",
     name: "login",
     component: Login,
@@ -36,15 +40,18 @@ router.beforeEach((to, from, next) => {
   const isLoggedIn = localStorage.getItem("loggedInUsername");
 
   if (to.matched.some(record => record.meta.requiresAuth) && !isLoggedIn) {
-    next({ name: "login" }); 
-  } 
-  else if ((to.name === "login" || to.name === "register") && isLoggedIn) {
-    next({ name: "todo" }); 
-  } 
-  else {
-    next(); 
+    next({ name: "login" });
+  } else if ((to.name === "login" || to.name === "register") && isLoggedIn) {
+    if (from.name !== "todo") {
+      next({ name: "todo" });
+    } else {
+      next();
+    }
+  } else {
+    next();
   }
 });
+
 
 
 export default router;

@@ -127,7 +127,12 @@ export default {
     },
   },
   mounted() {
-    this.loadTasksFromLocalStorage();
+    const loggedInUsername = localStorage.getItem("loggedInUsername");
+  if (!loggedInUsername) {
+    this.$router.push({ name: 'login' }); 
+  } else {
+    this.loadTasksFromLocalStorage(); 
+  }
   },
 };
 </script>
