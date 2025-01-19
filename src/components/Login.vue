@@ -1,7 +1,7 @@
 <template>
     <div class="loginPage">
       <h2 class="title">Zaloguj się</h2>
-      <Login @login="login" />
+
       <form @submit.prevent="login" method="post">
         <input v-model="username" type="text" placeholder="Nazwa użytkownika" required />
         <input v-model="password" type="password" placeholder="Hasło" required />
@@ -51,12 +51,28 @@ import { gapi } from 'gapi-script';
         try {
           const googleAuth = gapi.auth2.getAuthInstance();
           const user = await googleAuth.signIn();
-          const token = user.getAuthResponse().id_token;
-          console.log(token);
+
+          if (!googleAuth.isSignedIn.get()) {
+            await googleAuth.signIn();  
+          }
+
+          const token = googleAuth.currentUser.get().getAuthResponse().access_token;
+          gapi.auth.setToken({ access_token: token });
+
+          localStorage.setItem('googleToken', token);
           const profile = user.getBasicProfile();
           const username = profile.getName();
           localStorage.setItem("loggedInUsername", username);
           localStorage.setItem("accountType", "google");
+
+
+          
+          const isFirstLogin = !localStorage.getItem(username + "_tasks"); 
+
+        if (isFirstLogin) {
+          await this.createGoogleTaskList("Nowa lista zadań");
+          localStorage.setItem(username + "_tasks", JSON.stringify([]));
+        }
           this.isLoggedIn = true; 
           this.$router.push({ name: "todo" }); 
         } catch (error) {

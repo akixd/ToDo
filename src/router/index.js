@@ -3,7 +3,7 @@ import Router from "vue-router";
 import Login from "@/components/Login.vue";
 import Register from "@/components/Register.vue";
 import TodoList from "@/components/TodoList.vue";
-
+import CreateList from '../components/CreateList.vue';
 Vue.use(Router);
 
 const routes = [
@@ -28,6 +28,11 @@ const routes = [
     name: "register",
     component: Register,
     meta: { requiresAuth: false },
+  },
+  {
+    path: "/create-list",
+    name: "create-list",
+    component: CreateList,
   },
 ];
 

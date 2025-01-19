@@ -18,7 +18,12 @@ body {
   max-width: 480px;
   margin: 0 auto;
   padding: 0 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
+
 
 input[type="text"] {
   width: 100%;
@@ -224,8 +229,6 @@ color: #fff;
   padding: 0;
 }
 
-
-
 input[type="text"],
 input[type="password"] {
   width: 100%;
@@ -318,25 +321,76 @@ body {
   align-items: center;
 }
 
-.container {
-  max-width: 480px;
+.create-list-container {
+  text-align: center;
+  background: #fdfdfd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 0 auto;
   width: 100%;
-  padding: 0 15px;
+  box-sizing: border-box;
 }
 
-/* sesponsywność */
-@media (max-width: 480px) {
-  .login-register-container {
-    padding: 30px 20px;
-    max-width: 90%;
-  }
+.create-list-container h2 {
+  margin-bottom: 20px;
+}
 
-  input[type="text"],
-  input[type="password"] {
-    padding: 12px;
-  }
+.create-list-container form {
+  display: flex;
+  flex-direction: column;
+}
 
-  button.login-register-btn {
-    padding: 10px;
-  }
+.create-list-container input {
+  margin: 10px 0;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+}
+
+.create-list-container button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #44aca8;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 20px;
+}
+
+.create-list-container button:hover {
+  background-color: #369c8c; 
+}
+
+.loading {
+  margin-top: 20px;
+  font-size: 16px;
+}
+
+.error {
+  margin-top: 20px;
+  color: red;
+}
+
+.container-list {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 0 20px;
+}
+
+.container-list * {
+  text-decoration: none; 
+  color: #333;
+  width: 100%;
+  background: #4ec5c1;
+  border: none;
+  border-radius: 10px;
+  margin: 0 5px;
+  padding: 5px;
+  text-align: center;
 }
