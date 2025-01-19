@@ -65,8 +65,6 @@ import { gapi } from 'gapi-script';
           localStorage.setItem("loggedInUsername", username);
           localStorage.setItem("accountType", "google");
 
-
-          
           const isFirstLogin = !localStorage.getItem(username + "_tasks"); 
 
         if (isFirstLogin) {

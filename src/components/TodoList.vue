@@ -116,48 +116,50 @@ export default {
       }
     },
       async fetchGoogleTaskLists() {
-          this.loading = true;
-          this.errorMessage = '';
+          if (this.accountType === "google"){
+            this.loading = true;
+            this.errorMessage = '';
 
-          try {
-          const googleAuth = gapi.auth2.getAuthInstance();
-          const googleUser = googleAuth.currentUser.get();
+            try {
+            const googleAuth = gapi.auth2.getAuthInstance();
+            const googleUser = googleAuth.currentUser.get();
 
-          if (!googleUser.isSignedIn()) {
-            console.error("Użytkownik nie jest zalogowany do Google.");
-            this.errorMessage = "Proszę zalogować się do Google.";
-            return;
-          }
-
-          const token = localStorage.getItem('googleToken');
-          if (!token) {
-            throw new Error('Brak tokena dostępu.');
+            if (!googleUser.isSignedIn()) {
+              console.error("Użytkownik nie jest zalogowany do Google.");
+              this.errorMessage = "Proszę zalogować się do Google.";
+              return;
             }
-          gapi.auth.setToken({ access_token: token });
 
-          if (!gapi.client.tasks) {
-          await gapi.client.load('tasks', 'v1');
+            const token = localStorage.getItem('googleToken');
+            if (!token) {
+              throw new Error('Brak tokena dostępu.');
+              }
+            gapi.auth.setToken({ access_token: token });
+
+            if (!gapi.client.tasks) {
+            await gapi.client.load('tasks', 'v1');
+          }
+
+            const response = await gapi.client.tasks.tasklists.list();
+            console.log("Odpowiedź z Google API: ", response);
+
+            if (response && response.result && response.result.items) {
+              this.googleTaskLists = response.result.items;
+              console.log("Listy zadań Google:", this.googleTaskLists);
+
+              
+            if (!this.selectedGoogleTaskList && this.googleTaskLists.length > 0) {
+              this.selectedGoogleTaskList = this.googleTaskLists[0];
+            }
+            } else {
+              console.error("Nie znaleziono żadnych list zadań.");
+            }
+          } catch (error) {
+            console.error("Nie udało się pobrać list zadań:", error);
+          } finally {
+          this.loading = false;
         }
-
-          const response = await gapi.client.tasks.tasklists.list();
-          console.log("Odpowiedź z Google API: ", response);
-
-          if (response && response.result && response.result.items) {
-            this.googleTaskLists = response.result.items;
-            console.log("Listy zadań Google:", this.googleTaskLists);
-
-            
-          if (!this.selectedGoogleTaskList && this.googleTaskLists.length > 0) {
-            this.selectedGoogleTaskList = this.googleTaskLists[0];
           }
-          } else {
-            console.error("Nie znaleziono żadnych list zadań.");
-          }
-        } catch (error) {
-          console.error("Nie udało się pobrać list zadań:", error);
-        } finally {
-        this.loading = false;
-      }
         },
       async loadGoogleTasks() {
           if (!this.selectedGoogleTaskList) {
@@ -479,6 +481,15 @@ export default {
         this.tasksCopy = [];
       }
     },
+    accountType(newType) {
+    if (newType === "local") {
+      this.loadTasksFromLocalStorage();
+    } else if (newType === "google") {
+      if (localStorage.getItem('googleToken')) {
+        this.fetchGoogleTaskLists();
+    }
+  }
+  },
   },
   },
   mounted() {
@@ -487,13 +498,17 @@ export default {
   if (!loggedInUsername) {
     this.$router.push({ name: 'login' }); 
   } else {
-    this.loadTasksFromLocalStorage(); 
-    this.checkLoginStatus(); 
-    this.checkGoogleLoginStatus(); 
+    this.accountType = localStorage.getItem("accountType") || 'local'; // jeśli brak w localStorage, ustawiamy na 'local'
+
     if (this.accountType === "google") {
       this.fetchGoogleTaskLists();
+    } else {
+      this.loadTasksFromLocalStorage();
     }
+
+    this.checkLoginStatus();
+    this.checkGoogleLoginStatus();
   }
-  },
+}
 };
 </script>
