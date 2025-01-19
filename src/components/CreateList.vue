@@ -56,9 +56,9 @@
         this.errorMessage = '';
         
         try {
-            if (!gapi.client || !gapi.client.tasks) {
-          console.log('gapi.tasks jest niedostępne, czekam na załadowanie...');
-          await this.loadGapiTasksAPI();
+          if (!gapi.client || !gapi.client.tasks) {
+            console.log('gapi.tasks jest niedostępne, czekam na załadowanie...');
+            await this.loadGapiTasksAPI();
         }
 
         const token = localStorage.getItem('googleToken');
@@ -66,10 +66,12 @@
           throw new Error('Brak tokena dostępu.');
         }
 
-        gapi.auth.setToken({ access_token: token });
+        gapi.auth.setToken({
+          access_token: localStorage.getItem("googleToken"),
+        });
 
           if (!gapi.client.tasks) {
-          throw new Error('API Google Tasks nie jest załadowane.');
+            throw new Error('API Google Tasks nie jest załadowane.');
         }
         
         if (!gapi.client.tasks) {
@@ -82,8 +84,7 @@
             },
           });
           
-          localStorage.setItem('googleTaskLists', JSON.stringify(this.googleTaskLists));
-
+          this.selectedGoogleTaskList = response.result;
           console.log('Nowa lista zadań została utworzona:', response.result);
           
           this.$router.push({ name: 'todo' });
@@ -100,6 +101,7 @@
         this.username = "";
         this.password = "";
         localStorage.removeItem("loggedInUsername");
+        localStorage.removeItem("googleToken");
         const loggedInUsername = localStorage.getItem("loggedInUsername");
         if (loggedInUsername) {
           localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify([]));
@@ -114,6 +116,7 @@
           await googleAuth.signOut();
           this.tasks = [];
           localStorage.removeItem("loggedInUsername");
+          localStorage.removeItem("googleToken");
         } catch (error) {
           console.error('Wylogowanie z Google nie powiodło się:', error);
         }

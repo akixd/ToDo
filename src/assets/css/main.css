@@ -16,7 +16,7 @@ body {
 }
 
 .container {
-  max-width: 480px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0 15px;
   display: flex;
@@ -144,6 +144,11 @@ ul {
 .taskItems .toggle i {
   margin: 0 10px 0 0;
   font-size: 14px;
+  cursor: pointer;
+}
+
+.toggle-completed {
+  text-decoration: line-through;
 }
 
 .taskItems .toggle.toggle-completed {
@@ -382,6 +387,9 @@ body {
   display: flex;
   justify-content: space-between;
   margin: 0 0 20px;
+  padding: 10px;
+  width: auto;
+  align-items: center;
 }
 
 .container-list * {
@@ -391,7 +399,23 @@ body {
   background: #4ec5c1;
   border: none;
   border-radius: 10px;
-  margin: 0 5px;
   padding: 5px;
+  margin: 0 10px 0 0;
   text-align: center;
+  font-size: 24px;
+  flex-grow: 1;
+}
+
+.remove-list, .add-new-list, .choose-list {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.choose-list select, .choose-list option{
+  font-size: 16px;
+  width: auto;
+  padding: 10px; 
+  border-radius: 10px; 
 }

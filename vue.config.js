@@ -16,11 +16,22 @@ module.exports = {
         "img-src 'self' https://www.gstatic.com https://apis.google.com https://content.googleapis.com;",
         "frame-src 'self' https://accounts.google.com https://content.googleapis.com https://content-tasks.googleapis.com https://accounts.google.com/_/IdpIFrameHttp;",
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com;",
-        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css",
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css;",
         "object-src 'none';",
-        "base-uri 'self';"
+        "base-uri 'self';",
+        "report-to csp-reports;",
       ].join(' '),
       'Referrer-Policy': 'no-referrer-when-downgrade',
-    },
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Report-To': JSON.stringify({
+      "group": "csp-reports",
+      "max_age": 31536000,
+      "endpoints": [
+      {
+        "url": "https://accounts.google.com/_/IdpIFrameHttp/cspreport/fine-allowlist"
+      }
+    ]
+    }),
   },
+}
 };

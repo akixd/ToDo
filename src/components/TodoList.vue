@@ -18,6 +18,9 @@
         <div class="add-new-list">
           <router-link to="/create-list"><h2>Dodaj nową listę</h2></router-link>
         </div>
+        <div class="remove-list">
+          <button @click="removeList()"><h2>Usuń wybraną listę</h2></button>
+        </div>
       </div>
       <div class="form">
         <input
@@ -40,8 +43,8 @@
         </ul>
       </div>
       <div class="clearBtns">
-        <button @click="clearCompleted">Wyczyść ukończone</button>
-        <button @click="clearAll">Wyczyść wszystkie</button>
+        <button @click="clearCompleted">Usuń ukończone</button>
+        <button @click="clearAll">Usuń wszystkie</button>
       </div>
       <div class="pendingTasks">
         <span>Oczekujące zadania: {{ incomplete }}</span>
@@ -66,6 +69,7 @@ export default {
       newTask: "",
       tasksCopy: [], 
       googleTaskLists: [],
+      newListTitle: "",
       selectedGoogleTaskList: null,
       accountType: localStorage.getItem("accountType") || "local",
     };
@@ -86,6 +90,7 @@ export default {
     }
   },
     loadTasksFromLocalStorage() {
+      if (this.accountType === 'local') {
       const loggedInUsername = localStorage.getItem("loggedInUsername");
       if (loggedInUsername) {
         const tasksFromStorage = localStorage.getItem(loggedInUsername + "_tasks");
@@ -97,8 +102,12 @@ export default {
           }
         }
       }
+    }
     },
     saveTasksToLocalStorage() {
+      if (this.accountType === "google") {
+      return;
+    }
       const loggedInUsername = localStorage.getItem("loggedInUsername");
       if (loggedInUsername) {
         localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify(this.tasksCopy));
@@ -136,6 +145,11 @@ export default {
           if (response && response.result && response.result.items) {
             this.googleTaskLists = response.result.items;
             console.log("Listy zadań Google:", this.googleTaskLists);
+
+            
+          if (!this.selectedGoogleTaskList && this.googleTaskLists.length > 0) {
+            this.selectedGoogleTaskList = this.googleTaskLists[0];
+          }
           } else {
             console.error("Nie znaleziono żadnych list zadań.");
           }
@@ -155,20 +169,28 @@ export default {
         const response = await gapi.client.tasks.tasks.list({
           tasklist: this.selectedGoogleTaskList.id,
         });
-        this.tasksCopy = response.result.items || [];
+        const tasksFromGoogle = response.result.items || [];
+
+        this.tasksCopy = tasksFromGoogle.map(task => ({
+          id: task.id,
+          title: task.title,
+          completed: task.status === 'completed',  
+        }));
+
+        console.log("Wczytane zadania z Google:", this.tasksCopy);  
       } catch (error) {
         console.error("Nie udało się pobrać zadań z Google Tasks:", error);
       }
         },
         onGoogleTaskListChange() {
-        this.loadGoogleTasks();
+          console.log("Lista zadań została zmieniona:", this.selectedGoogleTaskList);
+          this.loadGoogleTasks();
       },
       async addTaskToGoogle(newTaskTitle) {
         if (!this.selectedGoogleTaskList) {
           alert("Wybierz listę Google Tasks przed dodaniem zadania.");
           return;
         }
-
         try {
           gapi.auth.setToken({
             access_token: localStorage.getItem('googleToken'),
@@ -196,7 +218,7 @@ export default {
       },
     async createGoogleTaskList(newListTitle) {
         gapi.auth.setToken({
-          access_token: this.token, 
+          access_token: localStorage.getItem("googleToken"),
         });
 
         const loggedInUsername = localStorage.getItem("loggedInUsername");
@@ -212,13 +234,50 @@ export default {
 
           console.log("Nowa lista zadań została utworzona:", response.result);
           this.googleTaskLists.push(response.result);
-
-
+          this.selectedGoogleTaskList = response.result;
+          this.loadGoogleTasks();
         } catch (error) {
           console.error("Nie udało się stworzyć nowej listy zadań:", error);
         }
       },
-    addTask() {
+      async removeList() {
+        if (!this.selectedGoogleTaskList) {
+          alert("Nie wybrano listy do usunięcia.");
+          return;
+        }
+
+        if (this.googleTaskLists[0] && this.selectedGoogleTaskList.id === this.googleTaskLists[0].id) {
+          alert("Nie można usunąć pierwszej listy.");
+          return;
+        }
+
+        try {
+          gapi.auth.setToken({
+            access_token: localStorage.getItem('googleToken'),
+          });
+
+          const response = await gapi.client.tasks.tasklists.delete({
+          tasklist: this.selectedGoogleTaskList.id,
+          });
+          console.log("Odpowiedź z usunięcia listy:", response);
+
+
+          this.googleTaskLists = this.googleTaskLists.filter(
+            (list) => list.id !== this.selectedGoogleTaskList.id
+          );
+
+          this.selectedGoogleTaskList = this.googleTaskLists.length > 0
+          ? this.googleTaskLists[0]
+          : null;
+
+          alert("Lista została usunięta.");
+          console.log("Lista została pomyślnie usunięta.");
+        } catch (error) {
+          console.error("Nie udało się usunąć listy:", error);
+          alert("Wystąpił błąd podczas usuwania listy. Spróbuj ponownie.");
+        }
+      },
+      addTask() {
           if (this.accountType === "google") {
         if (this.newTask.trim()) {
           this.addTaskToGoogle(this.newTask);
@@ -234,7 +293,7 @@ export default {
             completed: false,
             username: loggedInUsername,
           };
-          this.tasksCopy.push(newTask);
+          this.tasksCopy = [...this.tasksCopy, newTask];
           this.newTask = "";
           this.saveTasksToLocalStorage();
         } else {
@@ -244,7 +303,9 @@ export default {
     },
     removeTask(index) {
       this.tasksCopy.splice(index, 1); 
-      this.saveTasksToLocalStorage();
+      if (this.accountType !== "google") {
+       this.saveTasksToLocalStorage();
+  }
     },
     clearCompleted() {
       this.tasksCopy = this.tasksCopy.filter(this.inProgress); 
@@ -255,9 +316,42 @@ export default {
       this.saveTasksToLocalStorage();
     },
     completeTask(task) {
+
       task.completed = !task.completed;
-      this.saveTasksToLocalStorage();
+
+      if (this.accountType === "google") {
+        this.updateGoogleTaskStatus(task);
+      } else {
+        this.saveTasksToLocalStorage();
+      }
     },
+    async updateGoogleTaskStatus(task) {
+    if (!this.selectedGoogleTaskList) {
+      console.error("Nie wybrano listy zadań Google.");
+      return;
+    }
+
+    try {
+      const taskToUpdate = {
+        tasklist: this.selectedGoogleTaskList.id,
+        task: task.id,
+        resource: {
+          status: task.completed ? 'completed' : 'needsAction',
+        },
+      };
+
+      const response = await gapi.client.tasks.tasks.update(taskToUpdate);
+      console.log("Zaktualizowano zadanie w Google Tasks:", response.result);
+      
+      const index = this.tasksCopy.findIndex(t => t.id === task.id);
+      if (index !== -1) {
+        this.tasksCopy[index].completed = task.completed;
+      }
+
+    } catch (error) {
+      console.error("Nie udało się zaktualizować zadania w Google Tasks:", error);
+    }
+  },
     inProgress(task) {
       return !task.completed;
     },
@@ -360,6 +454,21 @@ export default {
     },
   },
   watch: {
+    googleTaskLists: {
+    handler(newVal) {
+      console.log("Zaktualizowano googleTaskLists:", newVal);
+    },
+    immediate: true,
+  },
+    selectedGoogleTaskList: {
+    immediate: true,
+    handler(newList) {
+      if (newList) {
+        console.log(`Wybrano nową listę: ${newList.title}`);
+        this.loadGoogleTasks();
+      }
+    },
+  },
     tasks: {
     immediate: true,
     handler(newTasks) {
@@ -381,6 +490,9 @@ export default {
     this.loadTasksFromLocalStorage(); 
     this.checkLoginStatus(); 
     this.checkGoogleLoginStatus(); 
+    if (this.accountType === "google") {
+      this.fetchGoogleTaskLists();
+    }
   }
   },
 };
