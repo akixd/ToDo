@@ -12,11 +12,7 @@ export default {
   },
   data() {
     return {
-      tasks: [], 
-      username: "", 
-      password: "", 
-      newUsername: "", 
-      newPassword: "", 
+
     };
   },
   mounted() {
