@@ -193,11 +193,18 @@ export default {
           alert("Wybierz listę Google Tasks przed dodaniem zadania.");
           return;
         }
-        try {
-          gapi.auth.setToken({
+
+        const accessToken = localStorage.getItem('googleToken');
+        if (!accessToken) {
+          alert("Brak tokenu dostępu.");
+          return;
+        }
+        
+        gapi.auth.setToken({
             access_token: localStorage.getItem('googleToken'),
           });
 
+        try {
           const response = await gapi.client.tasks.tasks.insert({
             tasklist: this.selectedGoogleTaskList.id,
             resource: {
@@ -206,17 +213,14 @@ export default {
           });
 
           console.log("Zadanie dodane do Google Tasks:", response.result);
-
-          this.tasksCopy.push({
-            id: response.result.id,
-            title: response.result.title,
-            completed: false,
-          });
-
-          this.newTask = "";
+          this.updateUI();
+          this.$forceUpdate();
         } catch (error) {
           console.error("Nie udało się dodać zadania do Google Tasks:", error);
         }
+      },
+      updateUI() {
+        this.$forceUpdate();
       },
     async createGoogleTaskList(newListTitle) {
         gapi.auth.setToken({
@@ -295,7 +299,7 @@ export default {
             completed: false,
             username: loggedInUsername,
           };
-          this.tasksCopy = [...this.tasksCopy, newTask];
+          this.tasksCopy.push(newTask);
           this.newTask = "";
           this.saveTasksToLocalStorage();
         } else {
@@ -304,10 +308,37 @@ export default {
       }
     },
     removeTask(index) {
+      console.log("Próba usunięcia zadania.");
+      const taskToRemove = this.tasksCopy[index];
+
       this.tasksCopy.splice(index, 1); 
-      if (this.accountType !== "google") {
-       this.saveTasksToLocalStorage();
-  }
+      console.log("Zadanie usunięte lokalnie.");
+
+      if (this.accountType === "google") {
+        this.removeTaskFromGoogle(taskToRemove);
+      } else {
+        this.saveTasksToLocalStorage();
+      }
+
+      this.$forceUpdate();
+    },
+    async removeTaskFromGoogle(task) {
+      if (!this.selectedGoogleTaskList) {
+        console.error("Nie wybrano listy Google Tasks.");
+        return;
+      }
+
+      try {
+        const response = await gapi.client.tasks.tasks.delete({
+          tasklist: this.selectedGoogleTaskList.id,
+          task: task.id,
+        });
+
+        console.log("Zadanie zostało usunięte z Google Tasks:", response.result);
+        this.$forceUpdate();
+      } catch (error) {
+        console.error("Nie udało się usunąć zadania z Google Tasks:", error);
+      }
     },
     clearCompleted() {
       this.tasksCopy = this.tasksCopy.filter(this.inProgress); 
@@ -332,8 +363,16 @@ export default {
       console.error("Nie wybrano listy zadań Google.");
       return;
     }
-
     try {
+
+      const taskStatus = task.completed ? 'completed' : 'needsAction';
+      if (!['completed', 'needsAction'].includes(taskStatus)) {
+        console.error("Nieprawidłowy status zadania:", taskStatus);
+        return;
+      }
+      console.log("Tasklist ID:", this.selectedGoogleTaskList.id);
+      console.log("Task ID:", task.id);
+      
       const taskToUpdate = {
         tasklist: this.selectedGoogleTaskList.id,
         task: task.id,
@@ -400,18 +439,7 @@ export default {
         this.isLoggedInGoogle = false;
       }
     },
-   async reauthenticate() {
-        try {
-          await gapi.auth2.getAuthInstance().signIn({
-            prompt: 'select_account',
-            ux_mode: 'popup',
-        });
-          const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-          localStorage.setItem('googleToken', token);
-        } catch (error) {
-          console.error('Błąd podczas ponownego logowania:', error);
-        }
-      },
+
       async loadGapiTasksAPI() {
 
         if (!gapi.client.tasks) {
