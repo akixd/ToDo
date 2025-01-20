@@ -235,6 +235,7 @@ export default {
 
           console.log("Nowa lista zadań została utworzona:", response.result);
           this.googleTaskLists.push(response.result);
+          await this.fetchGoogleTaskLists();
           this.selectedGoogleTaskList = response.result;
           this.loadGoogleTasks();
         } catch (error) {
@@ -303,11 +304,35 @@ export default {
       }
     },
     removeTask(index) {
-      this.tasksCopy.splice(index, 1); 
-      if (this.accountType !== "google") {
-       this.saveTasksToLocalStorage();
+      const task = this.tasksCopy[index];
+  if (this.accountType === "google" && task.id) {
+    try {
+      const token = localStorage.getItem('googleToken');
+      if (!token) {
+        console.error("Brak tokena dostępu.");
+        return;
+      }
+
+      gapi.auth.setToken({ access_token: token });
+
+      gapi.client.tasks.tasks.delete({
+        tasklist: this.selectedGoogleTaskList.id,
+        task: task.id,
+      });
+
+      console.log("Zadanie zostało usunięte z Google Tasks.");
+
+      this.tasksCopy.splice(index, 1);
+    } catch (error) {
+      console.error("Nie udało się usunąć zadania z Google Tasks:", error);
+      alert("Błąd podczas usuwania zadania. Spróbuj ponownie.");
+    }
+  } else {
+    this.tasksCopy.splice(index, 1);
+    this.saveTasksToLocalStorage();
   }
     },
+    
     clearCompleted() {
       this.tasksCopy = this.tasksCopy.filter(this.inProgress); 
       this.saveTasksToLocalStorage();
@@ -322,6 +347,7 @@ export default {
 
       if (this.accountType === "google") {
         this.updateGoogleTaskStatus(task);
+        this.loadGoogleTasks();
       } else {
         this.saveTasksToLocalStorage();
       }
@@ -331,6 +357,9 @@ export default {
       console.error("Nie wybrano listy zadań Google.");
       return;
     }
+    console.log("Wybrana lista zadań:", this.selectedGoogleTaskList);
+    console.log("Zadanie do aktualizacji:", task);
+    console.log("Status do ustawienia:", task.completed ? 'completed' : 'needsAction');
 
       const token = localStorage.getItem('googleToken');
       if (!token) {
@@ -357,6 +386,10 @@ export default {
       if (index !== -1) {
         this.tasksCopy[index].completed = task.completed;
       }
+
+      console.log("ID listy:", this.selectedGoogleTaskList.id);
+      console.log("ID zadania:", task.id);
+
 
     } catch (error) {
       console.error("Nie udało się zaktualizować zadania w Google Tasks:", error);
@@ -470,6 +503,10 @@ export default {
     googleTaskLists: {
     handler(newVal) {
       console.log("Zaktualizowano googleTaskLists:", newVal);
+      
+      if (!this.selectedGoogleTaskList && newVal.length > 0) {
+        this.selectedGoogleTaskList = newVal[0];
+      }
     },
     immediate: true,
   },
