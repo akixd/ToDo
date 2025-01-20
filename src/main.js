@@ -16,9 +16,6 @@ function initGapi() {
           clientId: '601871836773-fq4crbbco6cr9qknm3h15mdn5fcqsf23.apps.googleusercontent.com',
           scope: 'https://www.googleapis.com/auth/tasks',
           prompt: 'consent',
-          callback: (response) => {
-            this.createIntegration(response.code);
-          },
         });
         resolve(); 
       } catch (error) {

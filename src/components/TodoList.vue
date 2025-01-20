@@ -365,7 +365,7 @@ export default {
         if (loggedInUsername) {
           localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify([]));
         }
-        this.tasks = [];
+        this.tasksCopy = []; 
         this.$router.push({ name: 'login' }); 
         alert("Wylogowano!");
       },
@@ -373,7 +373,7 @@ export default {
         try {
           const googleAuth = gapi.auth2.getAuthInstance();
           await googleAuth.signOut();
-          this.tasks = [];
+          this.tasksCopy = []; 
           localStorage.removeItem("loggedInUsername");
         } catch (error) {
           console.error('Wylogowanie z Google nie powiodło się:', error);
@@ -402,7 +402,10 @@ export default {
     },
    async reauthenticate() {
         try {
-          await gapi.auth2.getAuthInstance().signIn();
+          await gapi.auth2.getAuthInstance().signIn({
+            prompt: 'select_account',
+            ux_mode: 'popup',
+        });
           const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
           localStorage.setItem('googleToken', token);
         } catch (error) {

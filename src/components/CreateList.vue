@@ -96,17 +96,15 @@
           this.loading = false;
         }
       },
-
       logout() {
         this.username = "";
         this.password = "";
         localStorage.removeItem("loggedInUsername");
-        localStorage.removeItem("googleToken");
         const loggedInUsername = localStorage.getItem("loggedInUsername");
         if (loggedInUsername) {
           localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify([]));
         }
-        this.tasks = [];
+        this.tasksCopy = []; 
         this.$router.push({ name: 'login' }); 
         alert("Wylogowano!");
       },
@@ -114,9 +112,8 @@
         try {
           const googleAuth = gapi.auth2.getAuthInstance();
           await googleAuth.signOut();
-          this.tasks = [];
+          this.tasksCopy = []; 
           localStorage.removeItem("loggedInUsername");
-          localStorage.removeItem("googleToken");
         } catch (error) {
           console.error('Wylogowanie z Google nie powiodło się:', error);
         }

@@ -6,7 +6,7 @@
         <input v-model="username" type="text" placeholder="Nazwa użytkownika" required />
         <input v-model="password" type="password" placeholder="Hasło" required />
         <button class="btn-login" type='sumbit'>Zaloguj się</button>
-        <button class="btn-login" type="submit" @click="googleSignIn">Zaloguj się przez Google</button>
+        <button class="btn-login" type="button" @click="googleSignIn">Zaloguj się przez Google</button>
         <p>Nie masz konta? 
         <router-link class="btn-register" to="/register">Zarejestruj się</router-link>
       </p>
@@ -49,13 +49,19 @@ import { gapi } from 'gapi-script';
       },
       async googleSignIn() {
         try {
+          console.log('Próba inicjalizacji Google Auth...');
           const googleAuth = gapi.auth2.getAuthInstance();
-          const user = await googleAuth.signIn();
-
+          await googleAuth.signOut();
+          const user = await googleAuth.signIn({
+            prompt: 'select_account',
+            ux_mode: 'popup',
+          });
+          console.log('Sprawdzanie stanu zalogowania...');
           if (!googleAuth.isSignedIn.get()) {
+            console.log('Użytkownik nie jest zalogowany, próba logowania...');
             await googleAuth.signIn();  
           }
-
+          console.log('Pomyślnie zalogowano użytkownika.');
           const token = googleAuth.currentUser.get().getAuthResponse().access_token;
           gapi.auth.setToken({ access_token: token });
 
@@ -68,8 +74,7 @@ import { gapi } from 'gapi-script';
           const isFirstLogin = !localStorage.getItem(username + "_tasks"); 
 
         if (isFirstLogin) {
-          await this.createGoogleTaskList("Nowa lista zadań");
-          localStorage.setItem(username + "_tasks", JSON.stringify([]));
+          await this.$router.push({ name: 'create-list' });
         }
           this.isLoggedIn = true; 
           this.$router.push({ name: "todo" }); 
@@ -77,7 +82,38 @@ import { gapi } from 'gapi-script';
           console.error('Logowanie do Google nie powiodło się:', error);
         }
       },
+      async reauthenticate() {
+        try {
+          await gapi.auth2.getAuthInstance().signIn({
+            prompt: 'select_account',
+            ux_mode: 'popup',
+        });
+          const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+          localStorage.setItem('googleToken', token);
+        } catch (error) {
+          console.error('Błąd podczas ponownego logowania:', error);
+        }
+      },
+      async checkTokenValidity() {
+    const token = localStorage.getItem('googleToken');
+    if (token) {
+      try {
+        const googleAuth = gapi.auth2.getAuthInstance();
+        const currentUser = googleAuth.currentUser.get();
+        const tokenExpiryTime = currentUser.getAuthResponse().expires_at;
+        const currentTime = new Date().getTime() / 1000; // czas w sekundach
+
+        if (tokenExpiryTime <= currentTime) {
+          // Token wygasł, trzeba go odnowić
+          console.log("Token wygasł, rozpoczynam ponowne logowanie.");
+          await this.reauthenticate();
+        }
+      } catch (error) {
+        console.error("Błąd podczas weryfikacji tokena:", error);
+      }
+    }
     },
+  }
   };
   </script>
   
