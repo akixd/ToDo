@@ -166,7 +166,6 @@ export default {
         console.error("Nie wybrano listy Google Tasks.");
         return;
       }
-
       try {
         const response = await gapi.client.tasks.tasks.list({
           tasklist: this.selectedGoogleTaskList.id,
@@ -332,6 +331,15 @@ export default {
       console.error("Nie wybrano listy zadań Google.");
       return;
     }
+
+      const token = localStorage.getItem('googleToken');
+      if (!token) {
+        console.error("Brak tokena dostępu.");
+        this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
+        return;
+      }
+
+      gapi.auth.setToken({ access_token: token });
 
     try {
       const taskToUpdate = {
