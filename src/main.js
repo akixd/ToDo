@@ -12,11 +12,15 @@ function initGapi() {
     gapi.load('client:auth2', async () => {
       try {
         await gapi.client.init({
-          apiKey: 'AIzaSyAqbKge33KtAEyokx7cyFsUO2u0B-uQ3XE',
           clientId: '601871836773-fq4crbbco6cr9qknm3h15mdn5fcqsf23.apps.googleusercontent.com',
           scope: 'https://www.googleapis.com/auth/tasks',
           prompt: 'consent',
         });
+        const authInstance = gapi.auth2.getAuthInstance();
+        
+        if (!authInstance.isSignedIn.get()) {
+          await authInstance.signIn();
+        }
         resolve(); 
       } catch (error) {
         console.error('Błąd inicjalizacji gapi:', error);

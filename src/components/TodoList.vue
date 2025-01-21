@@ -117,6 +117,17 @@ export default {
     },
       async fetchGoogleTaskLists() {
           if (this.accountType === "google"){
+
+            const token = localStorage.getItem('googleToken');
+            if (!token) {
+              console.error("Brak tokena dostępu.");
+              this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
+              return;
+            }
+            gapi.auth.setToken({
+              access_token: token,
+            });
+
             this.loading = true;
             this.errorMessage = '';
 
@@ -129,12 +140,6 @@ export default {
               this.errorMessage = "Proszę zalogować się do Google.";
               return;
             }
-
-            const token = localStorage.getItem('googleToken');
-            if (!token) {
-              throw new Error('Brak tokena dostępu.');
-              }
-            gapi.auth.setToken({ access_token: token });
 
             if (!gapi.client.tasks) {
             await gapi.client.load('tasks', 'v1');
@@ -361,30 +366,36 @@ export default {
       return;
     }
     console.log("Wybrana lista zadań:", this.selectedGoogleTaskList);
-    console.log("Zadanie do aktualizacji:", task);
     console.log("Status do ustawienia:", task.completed ? 'completed' : 'needsAction');
     console.log("Sprawdzanie zadania:", task);
 
       const token = localStorage.getItem('googleToken');
-    if (!token) {
-      console.error("Brak tokena dostępu.");
-      this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
+      if (!token) {
+        console.error("Brak tokena dostępu.");
+        this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
+        return;
+      }
+      gapi.auth.setToken({ access_token: token });
+
+    const taskToUpdate = {
+    tasklist: this.selectedGoogleTaskList.id,
+    task: task.id,
+    resource: {
+      status: task.completed ? 'completed' : 'needsAction',
+    },
+  };
+
+    if (!taskToUpdate.tasklist || !taskToUpdate.task) {
+      console.error("Nie można zaktualizować zadania - brak wymaganych danych.", taskToUpdate);
       return;
     }
 
-      gapi.auth.setToken({
-      access_token: localStorage.getItem('googleToken'),
-      });
-
-      const taskToUpdate = {
-      tasklist: this.selectedGoogleTaskList.id,
-      task: task.id,
-      resource: {
-      status: task.completed ? 'completed' : 'needsAction',
-      },
-    };
     console.log("Dane do wysłania do API:", taskToUpdate);
 
+      if (!taskToUpdate.tasklist) {
+        console.error("Brakuje ID listy zadań.");
+      }
+      
       if (!taskToUpdate.task) {
         console.error("Brak ID zadania:", taskToUpdate);
         return;
@@ -437,10 +448,6 @@ export default {
       if (loggedInUsername) {
         this.isLoggedIn = true;
       }
-      const googleUser = gapi.auth2.getAuthInstance().currentUser.get();
-      if (googleUser.isSignedIn()) {
-        this.isLoggedInGoogle = true;
-      }
     },
     checkGoogleLoginStatus() {
       const googleAuth = gapi.auth2.getAuthInstance();
@@ -453,7 +460,7 @@ export default {
         this.isLoggedInGoogle = false;
       }
     },
-   async reauthenticate() {
+    async reauthenticate() {
         try {
           await gapi.auth2.getAuthInstance().signIn({
             prompt: 'select_account',
@@ -491,31 +498,29 @@ export default {
     }
     },
     async checkAuthStatus() {
-     const authInstance = gapi.auth2.getAuthInstance();
-    
+    const authInstance = gapi.auth2.getAuthInstance();
 
     if (authInstance.isSignedIn.get()) {
-        const token = authInstance.currentUser.get().getAuthResponse().access_token;
-        console.log("Token dostępu:", token);
-        
-        const grantedScopes = authInstance.currentUser.get().getGrantedScopes();
-        if (grantedScopes.includes("https://www.googleapis.com/auth/tasks")) {
+      const token = authInstance.currentUser.get().getAuthResponse().access_token;
+      console.log("Token dostępu:", token);
+      
+      const grantedScopes = authInstance.currentUser.get().getGrantedScopes();
+      if (grantedScopes.includes("https://www.googleapis.com/auth/tasks")) {
         console.log("Użytkownik ma dostęp do Google Tasks API.");
-        } else {
+      } else {
         console.log("Brak wymaganych uprawnień, wymagane ponowne logowanie.");
         await this.signInWithScopes();
-        }
+      }
     } else {
-        console.log("Użytkownik nie jest zalogowany.");
-        await this.signInWithScopes();
+      console.log("Użytkownik nie jest zalogowany.");
+      await this.signInWithScopes();
     }
-    },
+  },
   },
   watch: {
     googleTaskLists: {
     handler(newVal) {
       console.log("Zaktualizowano googleTaskLists:", newVal);
-      
       if (!this.selectedGoogleTaskList && newVal.length > 0) {
         this.selectedGoogleTaskList = newVal[0];
       }
@@ -558,16 +563,17 @@ export default {
   if (!loggedInUsername) {
     this.$router.push({ name: 'login' }); 
   } else {
-    this.accountType = localStorage.getItem("accountType") || 'local'; // jeśli brak w localStorage, ustawiamy na 'local'
+    this.accountType = localStorage.getItem("accountType") || 'local';
 
     if (this.accountType === "google") {
       this.fetchGoogleTaskLists();
     } else {
       this.loadTasksFromLocalStorage();
     }
-
+    this.checkAuthStatus();
     this.checkLoginStatus();
     this.checkGoogleLoginStatus();
+    this.reauthenticate()
   }
 }
 };

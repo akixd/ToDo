@@ -63,9 +63,12 @@ import { gapi } from 'gapi-script';
           }
           console.log('Pomyślnie zalogowano użytkownika.');
           const token = googleAuth.currentUser.get().getAuthResponse().access_token;
+          if (!token) {
+              throw new Error("Brak tokena dostępu");
+          }
           gapi.auth.setToken({ access_token: token });
-
           localStorage.setItem('googleToken', token);
+
           const profile = user.getBasicProfile();
           const username = profile.getName();
           localStorage.setItem("loggedInUsername", username);
@@ -84,7 +87,10 @@ import { gapi } from 'gapi-script';
       },
       async reauthenticate() {
         try {
-          await gapi.auth2.getAuthInstance().signIn({
+        console.log('Ponowne logowanie...');
+        const googleAuth = gapi.auth2.getAuthInstance();
+
+        await googleAuth.signIn({
             prompt: 'select_account',
             ux_mode: 'popup',
         });
