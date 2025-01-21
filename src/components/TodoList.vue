@@ -171,7 +171,7 @@ export default {
           tasklist: this.selectedGoogleTaskList.id,
         });
         const tasksFromGoogle = response.result.items || [];
-
+        
         this.tasksCopy = tasksFromGoogle.map(task => ({
           id: task.id,
           title: task.title,
@@ -318,21 +318,24 @@ export default {
       gapi.client.tasks.tasks.delete({
         tasklist: this.selectedGoogleTaskList.id,
         task: task.id,
+      }).then(() => {
+        console.log("Zadanie zostało usunięte z Google Tasks.");
+
+        this.tasksCopy.splice(index, 1);
+        this.loadGoogleTasks();
+      }).catch((error) => {
+        console.error("Nie udało się usunąć zadania z Google Tasks:", error);
+        alert("Błąd podczas usuwania zadania. Spróbuj ponownie.");
       });
-
-      console.log("Zadanie zostało usunięte z Google Tasks.");
-
+      } catch (error) {
+        console.error("Nie udało się usunąć zadania z Google Tasks:", error);
+        alert("Błąd podczas usuwania zadania. Spróbuj ponownie.");
+      }
+    } else {
       this.tasksCopy.splice(index, 1);
-    } catch (error) {
-      console.error("Nie udało się usunąć zadania z Google Tasks:", error);
-      alert("Błąd podczas usuwania zadania. Spróbuj ponownie.");
+      this.saveTasksToLocalStorage();
     }
-  } else {
-    this.tasksCopy.splice(index, 1);
-    this.saveTasksToLocalStorage();
-  }
     },
-    
     clearCompleted() {
       this.tasksCopy = this.tasksCopy.filter(this.inProgress); 
       this.saveTasksToLocalStorage();
@@ -360,25 +363,34 @@ export default {
     console.log("Wybrana lista zadań:", this.selectedGoogleTaskList);
     console.log("Zadanie do aktualizacji:", task);
     console.log("Status do ustawienia:", task.completed ? 'completed' : 'needsAction');
+    console.log("Sprawdzanie zadania:", task);
 
       const token = localStorage.getItem('googleToken');
-      if (!token) {
-        console.error("Brak tokena dostępu.");
-        this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
+    if (!token) {
+      console.error("Brak tokena dostępu.");
+      this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
+      return;
+    }
+
+      gapi.auth.setToken({
+      access_token: localStorage.getItem('googleToken'),
+      });
+
+      const taskToUpdate = {
+      tasklist: this.selectedGoogleTaskList.id,
+      task: task.id,
+      resource: {
+      status: task.completed ? 'completed' : 'needsAction',
+      },
+    };
+    console.log("Dane do wysłania do API:", taskToUpdate);
+
+      if (!taskToUpdate.task) {
+        console.error("Brak ID zadania:", taskToUpdate);
         return;
       }
-
-      gapi.auth.setToken({ access_token: token });
-
-    try {
-      const taskToUpdate = {
-        tasklist: this.selectedGoogleTaskList.id,
-        task: task.id,
-        resource: {
-          status: task.completed ? 'completed' : 'needsAction',
-        },
-      };
-
+    
+      try {
       const response = await gapi.client.tasks.tasks.update(taskToUpdate);
       console.log("Zaktualizowano zadanie w Google Tasks:", response.result);
       
@@ -390,7 +402,7 @@ export default {
       console.log("ID listy:", this.selectedGoogleTaskList.id);
       console.log("ID zadania:", task.id);
 
-
+      this.saveTasksToLocalStorage();
     } catch (error) {
       console.error("Nie udało się zaktualizować zadania w Google Tasks:", error);
     }

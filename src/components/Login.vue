@@ -101,10 +101,9 @@ import { gapi } from 'gapi-script';
         const googleAuth = gapi.auth2.getAuthInstance();
         const currentUser = googleAuth.currentUser.get();
         const tokenExpiryTime = currentUser.getAuthResponse().expires_at;
-        const currentTime = new Date().getTime() / 1000; // czas w sekundach
+        const currentTime = new Date().getTime() / 1000;
 
         if (tokenExpiryTime <= currentTime) {
-          // Token wygasł, trzeba go odnowić
           console.log("Token wygasł, rozpoczynam ponowne logowanie.");
           await this.reauthenticate();
         }
