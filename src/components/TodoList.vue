@@ -198,9 +198,7 @@ export default {
           return;
         }
         try {
-          gapi.auth.setToken({
-            access_token: localStorage.getItem('googleToken'),
-          });
+          gapi.auth.setToken({ access_token: localStorage.getItem('googleToken') });
 
           const response = await gapi.client.tasks.tasks.insert({
             tasklist: this.selectedGoogleTaskList.id,
@@ -325,7 +323,6 @@ export default {
         task: task.id,
       }).then(() => {
         console.log("Zadanie zostało usunięte z Google Tasks.");
-
         this.tasksCopy.splice(index, 1);
         this.loadGoogleTasks();
       }).catch((error) => {
@@ -350,7 +347,6 @@ export default {
       this.saveTasksToLocalStorage();
     },
     completeTask(task) {
-
       task.completed = !task.completed;
 
       if (this.accountType === "google") {
@@ -368,8 +364,8 @@ export default {
     console.log("Wybrana lista zadań:", this.selectedGoogleTaskList);
     console.log("Status do ustawienia:", task.completed ? 'completed' : 'needsAction');
     console.log("Sprawdzanie zadania:", task);
-
-      const token = localStorage.getItem('googleToken');
+    const googleAuth = gapi.auth2.getAuthInstance();
+    const token = googleAuth.currentUser.get().getAuthResponse().access_token;
       if (!token) {
         console.error("Brak tokena dostępu.");
         this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
@@ -378,10 +374,10 @@ export default {
       gapi.auth.setToken({ access_token: token });
 
     const taskToUpdate = {
-    tasklist: this.selectedGoogleTaskList.id,
-    task: task.id,
-    resource: {
-      status: task.completed ? 'completed' : 'needsAction',
+    "tasklist": this.selectedGoogleTaskList.id,
+    "task": task.id,
+    "resource": {
+      "status": task.completed ? 'completed' : 'needsAction',
     },
   };
 
@@ -402,12 +398,31 @@ export default {
       }
     
       try {
+        if (!token) {
+          console.error("Brak tokena dostępu w localStorage.");
+          return;
+        }
+        console.log("Token używany do autoryzacji:", token);
+        console.error(task.id);
+
       const response = await gapi.client.tasks.tasks.update(taskToUpdate);
+      console.log("Full API response:", response);
+        if (response.status !== 200) { 
+            console.error("Google Tasks API error:", response.status, response.statusText);
+            console.error("Error details:", response.result || response.error); 
+            return; 
+        }
+
       console.log("Zaktualizowano zadanie w Google Tasks:", response.result);
       
       const index = this.tasksCopy.findIndex(t => t.id === task.id);
+      console.log("Index zadania:", index);
       if (index !== -1) {
+        console.log("Zadanie przed aktualizacją:", this.tasksCopy[index]);
         this.tasksCopy[index].completed = task.completed;
+        console.log("Zadanie po aktualizacji:", this.tasksCopy[index]);
+      } else {
+        console.error("Nie znaleziono zadania w tasksCopy");
       }
 
       console.log("ID listy:", this.selectedGoogleTaskList.id);
@@ -425,6 +440,7 @@ export default {
         this.username = "";
         this.password = "";
         localStorage.removeItem("loggedInUsername");
+        localStorage.removeItem("accountType");
         const loggedInUsername = localStorage.getItem("loggedInUsername");
         if (loggedInUsername) {
           localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify([]));
@@ -439,6 +455,7 @@ export default {
           await googleAuth.signOut();
           this.tasksCopy = []; 
           localStorage.removeItem("loggedInUsername");
+          localStorage.removeItem("accountType");
         } catch (error) {
           console.error('Wylogowanie z Google nie powiodło się:', error);
         }
@@ -460,22 +477,35 @@ export default {
         this.isLoggedInGoogle = false;
       }
     },
-    async reauthenticate() {
-        try {
-          await gapi.auth2.getAuthInstance().signIn({
-            prompt: 'select_account',
-            ux_mode: 'popup',
-        });
-          const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-          localStorage.setItem('googleToken', token);
-        } catch (error) {
-          console.error('Błąd podczas ponownego logowania:', error);
+      async checkTokenValidity() {
+      if (this.accountType === "google"){
+        const token = localStorage.getItem('googleToken');
+        if (token) {
+          try {
+            const googleAuth = gapi.auth2.getAuthInstance();
+            const currentUser = googleAuth.currentUser.get();
+            const tokenExpiryTime = currentUser.getAuthResponse().expires_at;
+            const currentTime = new Date().getTime() / 1000;
+
+            if (tokenExpiryTime <= currentTime) {
+              console.log("Token wygasł, rozpoczynam ponowne logowanie.");
+              await this.reauthenticate();
+            }
+          } catch (error) {
+            console.error("Błąd podczas weryfikacji tokena:", error);
+          }
         }
+      }
       },
       async loadGapiTasksAPI() {
-
         if (!gapi.client.tasks) {
          try {
+          const token = localStorage.getItem('googleToken');
+          if (!token) {
+            console.error("Brak tokena dostępu w localStorage.");
+            return;
+          }
+          console.log("Token używany do autoryzacji:", token);
          await gapi.client.load('tasks', 'v1');
          console.log('Google Tasks API zostało załadowane.');
          } catch (error) {
@@ -486,7 +516,7 @@ export default {
             console.log('Google Tasks API jest już załadowane.');
         }
         },
-        async signInWithScopes() {
+    async signInWithScopes() {
     try {
         const authInstance = gapi.auth2.getAuthInstance();
         await authInstance.signIn({
@@ -529,9 +559,9 @@ export default {
   },
     selectedGoogleTaskList: {
     immediate: true,
-    handler(newList) {
-      if (newList) {
-        console.log(`Wybrano nową listę: ${newList.title}`);
+    handler(newVal) {
+      if (newVal) {
+        console.log(`Wybrano nową listę: ${newVal.title}`);
         this.loadGoogleTasks();
       }
     },
@@ -567,13 +597,12 @@ export default {
 
     if (this.accountType === "google") {
       this.fetchGoogleTaskLists();
+      this.checkGoogleLoginStatus();
+      this.checkAuthStatus();
     } else {
       this.loadTasksFromLocalStorage();
+      this.checkLoginStatus();
     }
-    this.checkAuthStatus();
-    this.checkLoginStatus();
-    this.checkGoogleLoginStatus();
-    this.reauthenticate()
   }
 }
 };

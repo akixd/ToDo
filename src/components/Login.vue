@@ -85,39 +85,7 @@ import { gapi } from 'gapi-script';
           console.error('Logowanie do Google nie powiodło się:', error);
         }
       },
-      async reauthenticate() {
-        try {
-        console.log('Ponowne logowanie...');
-        const googleAuth = gapi.auth2.getAuthInstance();
 
-        await googleAuth.signIn({
-            prompt: 'select_account',
-            ux_mode: 'popup',
-        });
-          const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
-          localStorage.setItem('googleToken', token);
-        } catch (error) {
-          console.error('Błąd podczas ponownego logowania:', error);
-        }
-      },
-      async checkTokenValidity() {
-    const token = localStorage.getItem('googleToken');
-    if (token) {
-      try {
-        const googleAuth = gapi.auth2.getAuthInstance();
-        const currentUser = googleAuth.currentUser.get();
-        const tokenExpiryTime = currentUser.getAuthResponse().expires_at;
-        const currentTime = new Date().getTime() / 1000;
-
-        if (tokenExpiryTime <= currentTime) {
-          console.log("Token wygasł, rozpoczynam ponowne logowanie.");
-          await this.reauthenticate();
-        }
-      } catch (error) {
-        console.error("Błąd podczas weryfikacji tokena:", error);
-      }
-    }
-    },
   }
   };
   </script>
