@@ -100,6 +100,7 @@
         this.username = "";
         this.password = "";
         localStorage.removeItem("loggedInUsername");
+        localStorage.removeItem("accountType");
         const loggedInUsername = localStorage.getItem("loggedInUsername");
         if (loggedInUsername) {
           localStorage.setItem(loggedInUsername + "_tasks", JSON.stringify([]));
@@ -114,6 +115,7 @@
           await googleAuth.signOut();
           this.tasksCopy = []; 
           localStorage.removeItem("loggedInUsername");
+          localStorage.removeItem("accountType");
         } catch (error) {
           console.error('Wylogowanie z Google nie powiodło się:', error);
         }
@@ -131,8 +133,7 @@
     },
     async checkAuthStatus() {
      const authInstance = gapi.auth2.getAuthInstance();
-    
-
+  
     if (authInstance.isSignedIn.get()) {
         const token = authInstance.currentUser.get().getAuthResponse().access_token;
         console.log("Token dostępu:", token);

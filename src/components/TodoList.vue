@@ -308,6 +308,12 @@ export default {
     },
     removeTask(index) {
       const task = this.tasksCopy[index];
+
+  if (!task.id || !this.selectedGoogleTaskList || !this.selectedGoogleTaskList.id) {
+    console.error("Brak wymaganych danych do usunięcia zadania.");
+    return;
+  }
+
   if (this.accountType === "google" && task.id) {
     try {
       const token = localStorage.getItem('googleToken');
@@ -351,7 +357,6 @@ export default {
 
       if (this.accountType === "google") {
         this.updateGoogleTaskStatus(task);
-        this.loadGoogleTasks();
       } else {
         this.saveTasksToLocalStorage();
       }
@@ -364,22 +369,25 @@ export default {
     console.log("Wybrana lista zadań:", this.selectedGoogleTaskList);
     console.log("Status do ustawienia:", task.completed ? 'completed' : 'needsAction');
     console.log("Sprawdzanie zadania:", task);
-    const googleAuth = gapi.auth2.getAuthInstance();
-    const token = googleAuth.currentUser.get().getAuthResponse().access_token;
-      if (!token) {
-        console.error("Brak tokena dostępu.");
-        this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
-        return;
-      }
-      gapi.auth.setToken({ access_token: token });
 
-    const taskToUpdate = {
-    "tasklist": this.selectedGoogleTaskList.id,
-    "task": task.id,
-    "resource": {
+
+        const googleAuth = gapi.auth2.getAuthInstance();
+        const token = googleAuth.currentUser.get().getAuthResponse().access_token;
+        if (!token) {
+          console.error("Brak tokena dostępu.");
+          this.errorMessage = "Brak tokena dostępu. Proszę zalogować się ponownie.";
+          return;
+        }
+        gapi.auth.setToken({ access_token: localStorage.getItem('googleToken') });
+
+
+      const taskToUpdate = {
+      "tasklist": this.selectedGoogleTaskList.id,
+      "task": task.id,
+      "resource": {
       "status": task.completed ? 'completed' : 'needsAction',
-    },
-  };
+      },
+    };
 
     if (!taskToUpdate.tasklist || !taskToUpdate.task) {
       console.error("Nie można zaktualizować zadania - brak wymaganych danych.", taskToUpdate);
@@ -398,12 +406,8 @@ export default {
       }
     
       try {
-        if (!token) {
-          console.error("Brak tokena dostępu w localStorage.");
-          return;
-        }
         console.log("Token używany do autoryzacji:", token);
-        console.error(task.id);
+        console.log(gapi.client.tasks.tasks.update(taskToUpdate));
 
       const response = await gapi.client.tasks.tasks.update(taskToUpdate);
       console.log("Full API response:", response);
