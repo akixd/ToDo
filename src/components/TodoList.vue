@@ -96,8 +96,12 @@ export default {
         const tasksFromStorage = localStorage.getItem(loggedInUsername + "_tasks");
         if (tasksFromStorage) {
           try {
-            this.tasksCopy = JSON.parse(tasksFromStorage);
-          } catch (error) {
+              const parsedTasks = JSON.parse(tasksFromStorage);
+              this.tasksCopy = parsedTasks.map(task => ({
+                ...task,
+                accountType: "local",
+              }));
+            } catch (error) {
             console.error("Błąd podczas wczytywania zadań z Local Storage:", error);
           }
         }
@@ -181,6 +185,7 @@ export default {
           id: task.id,
           title: task.title,
           completed: task.status === 'completed',  
+          accountType: "google",
         }));
 
         console.log("Wczytane zadania z Google:", this.tasksCopy);  
@@ -296,6 +301,7 @@ export default {
             id: Date.now(),
             title: this.newTask,
             completed: false,
+            accountType: "local",
             username: loggedInUsername,
           };
           this.tasksCopy = [...this.tasksCopy, newTask];
@@ -347,10 +353,22 @@ export default {
     clearCompleted() {
       this.tasksCopy = this.tasksCopy.filter(this.inProgress); 
       this.saveTasksToLocalStorage();
+
+      if (this.accountType === "google") {
+        this.updateGoogleTaskStatus("clearCompleted")
+      } else {
+        this.saveTasksToLocalStorage();
+      }
     },
     clearAll() {
       this.tasksCopy = [];
       this.saveTasksToLocalStorage();
+
+      if (this.accountType === "google") {
+        this.updateGoogleTaskStatus("clearAll")
+      } else {
+        this.saveTasksToLocalStorage();
+      }
     },
     completeTask(task) {
       task.completed = !task.completed;
@@ -380,7 +398,79 @@ export default {
         }
         gapi.auth.setToken({ access_token: localStorage.getItem('googleToken') });
 
+        if (task === "clearAll") {
 
+        try {
+          console.log("Usuwanie wszystkich zadań z listy:", this.selectedGoogleTaskList.id);
+
+          const response = await gapi.client.tasks.tasks.list({
+            tasklist: this.selectedGoogleTaskList.id,
+          });
+
+          if (response.status !== 200) {
+            console.error("Błąd podczas pobierania zadań:", response.status, response.statusText);
+            return;
+          }
+
+          const tasks = response.result.items;
+          if (tasks && tasks.length > 0) {
+            for (const taskToDelete of tasks) {
+              console.log(`Usuwam zadanie: ${taskToDelete.id}`);
+              await gapi.client.tasks.tasks.delete({
+                tasklist: this.selectedGoogleTaskList.id,
+                task: taskToDelete.id,
+              });
+            }
+            console.log("Wszystkie zadania zostały usunięte.");
+          } else {
+            console.log("Brak zadań do usunięcia.");
+          }
+
+          this.tasksCopy = [];
+          this.saveTasksToLocalStorage();
+
+        } catch (error) {
+          console.error("Błąd podczas usuwania zadań z Google Tasks:", error);
+        }
+        return;
+      }
+
+      if (task === "clearCompleted") {
+      try {
+        console.log("Usuwanie ukończonych zadań z listy:", this.selectedGoogleTaskList.id);
+
+        const response = await gapi.client.tasks.tasks.list({
+          tasklist: this.selectedGoogleTaskList.id,
+          completed: true,
+        });
+
+        if (response.status !== 200) {
+          console.error("Błąd podczas pobierania zadań:", response.status, response.statusText);
+          return;
+        }
+
+        const tasks = response.result.items;
+        if (tasks && tasks.length > 0) {
+          for (const taskToDelete of tasks) {
+            console.log(`Usuwam ukończone zadanie: ${taskToDelete.id}`);
+            await gapi.client.tasks.tasks.delete({
+              tasklist: this.selectedGoogleTaskList.id,
+              task: taskToDelete.id,
+            });
+          }
+          console.log("Wszystkie ukończone zadania zostały usunięte.");
+        } else {
+          console.log("Brak ukończonych zadań do usunięcia.");
+        }
+        this.tasksCopy = this.tasksCopy.filter(task => !task.completed);
+        this.saveTasksToLocalStorage();
+
+      } catch (error) {
+        console.error("Błąd podczas usuwania ukończonych zadań z Google Tasks:", error);
+      }
+      return; 
+    }
+    
       const taskToUpdate = {
       "tasklist": this.selectedGoogleTaskList.id,
       "task": task.id,
