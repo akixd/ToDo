@@ -315,13 +315,14 @@ export default {
     removeTask(index) {
       const task = this.tasksCopy[index];
 
-  if (!task.id || !this.selectedGoogleTaskList || !this.selectedGoogleTaskList.id) {
-    console.error("Brak wymaganych danych do usunięcia zadania.");
-    return;
-  }
+
 
   if (this.accountType === "google" && task.id) {
     try {
+      if (!task.id || !this.selectedGoogleTaskList || !this.selectedGoogleTaskList.id) {
+      console.error("Brak wymaganych danych do usunięcia zadania.");
+      return;
+    }
       const token = localStorage.getItem('googleToken');
       if (!token) {
         console.error("Brak tokena dostępu.");
